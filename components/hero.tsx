@@ -14,11 +14,15 @@ export function Hero() {
         <p className="max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
           Travel Split keeps your group&apos;s plans, expenses, reservations, and
           important travel information organized together — so everyone stays on
-          the           same page from takeoff to touchdown.
+          the same page from takeoff to touchdown.
         </p>
 
         <div className="flex flex-col items-start gap-2">
-          <Button size="lg" className="w-full sm:w-auto">
+          <Button
+            size="lg"
+            aria-label="Start planning your trip with Travel Split"
+            className="w-full text-base font-semibold hover:bg-primary/90 sm:w-auto"
+          >
             Start planning
           </Button>
           <p className="text-sm text-muted-foreground">
