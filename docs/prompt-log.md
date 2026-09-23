@@ -8,6 +8,10 @@ The initial implementation prompt instructed the coding agent to build the `/cor
 
 _Add the Week 1 Prompt 2 documentation here._
 
+## Prompt 6 — Market Research
+
+The market research prompt asked the coding agent to add a responsive `/research` page that validates the Travel Split idea with five global examples, Mexico localization notes, an eight-entry competitor/substitute table, name filtering, a simple risk map, dashboard insights, Supabase save/load behavior, and `/docs` documentation. The implementation deliberately uses a maintained local snapshot instead of web scraping or live pricing.
+
 ## Prompt 3 — To Be Completed
 
 _Add the Week 1 Prompt 3 documentation here._

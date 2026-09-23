@@ -12,6 +12,9 @@ export function SiteHeader() {
         <Link className="text-primary underline-offset-4 hover:underline" href="/core">
           Core
         </Link>
+        <Link className="text-primary underline-offset-4 hover:underline" href="/research">
+          Research
+        </Link>
       </nav>
     </header>
   )
