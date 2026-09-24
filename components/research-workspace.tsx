@@ -96,6 +96,8 @@ export function ResearchWorkspace() {
     return researchData.competitors.filter((entry) => entry.name.toLowerCase().includes(normalizedQuery))
   }, [query])
 
+  const keyRisks = researchData.risks.filter((risk) => ['Competition', 'Low differentiation', 'Adoption risk'].includes(risk.label))
+
   async function handleSave() {
     setIsSaving(true)
     setMessage('')
@@ -176,16 +178,16 @@ export function ResearchWorkspace() {
         </div>
         <div>
           <SectionHeading eyebrow="Risk map" title="Where the idea can get stuck" />
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {researchData.risks.map((risk) => (
-              <article key={risk.label} className="rounded-xl border border-border bg-card p-4">
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            {keyRisks.map((risk) => (
+              <article key={risk.label} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-display font-semibold text-card-foreground">{risk.label}</h3>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${risk.level === 'High' ? 'bg-destructive/10 text-destructive' : 'bg-accent/30 text-accent-foreground'}`}>
+                  <h3 className="font-display text-lg font-semibold text-card-foreground">{risk.label}</h3>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive">
                     <CircleAlert className="h-3 w-3" aria-hidden="true" />{risk.level}
                   </span>
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{risk.detail}</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{risk.detail}</p>
               </article>
             ))}
           </div>
@@ -197,13 +199,18 @@ export function ResearchWorkspace() {
           <label className="flex h-10 w-full items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm sm:w-72">
             <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <span className="sr-only">Search competitors by name</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground" />
+            <input aria-label="Search competitors by name" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground" />
           </label>
         </SectionHeading>
         <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+          <table aria-label="Competitive landscape" className="w-full min-w-[720px] border-collapse text-left text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-              <tr><th className="px-5 py-4 font-medium">Name</th><th className="px-5 py-4 font-medium">Type</th><th className="px-5 py-4 font-medium">Key features</th><th className="px-5 py-4 font-medium">Gaps</th></tr>
+              <tr>
+                <th scope="col" className="px-5 py-4 font-medium">Name</th>
+                <th scope="col" className="px-5 py-4 font-medium">Type</th>
+                <th scope="col" className="px-5 py-4 font-medium">Key features</th>
+                <th scope="col" className="px-5 py-4 font-medium">Gaps</th>
+              </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredCompetitors.map((entry) => <tr key={entry.name} className="align-top"><td className="px-5 py-4 font-display font-semibold text-card-foreground">{entry.name}</td><td className="px-5 py-4"><span className="rounded-full bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">{entry.type}</span></td><td className="px-5 py-4 leading-relaxed text-muted-foreground">{entry.features}</td><td className="px-5 py-4 leading-relaxed text-muted-foreground">{entry.gaps}</td></tr>)}
