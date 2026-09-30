@@ -23,3 +23,9 @@ _Add the Week 1 Prompt 4 documentation here._
 ## Prompt 5 — To Be Completed
 
 _Add the Week 1 Prompt 5 documentation here._
+
+# Sep 30, 2026 — Module 2 corrections
+
+- Made the repository public after checking with `git ls-files` that no `.env` file was committed.
+- Corrected the Week 2 commit count from 6 to 2.
+- Updated the README with live links.
