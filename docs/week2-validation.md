@@ -1,6 +1,6 @@
 # Human validation – Module 2 correction
-- Reviewer: [Hector]
-- Date: [Sep, 25, 2026]
+- Reviewer: Hector
+- Date: Sep, 25, 2026
 - Feature reviewed: Start Planning (/core), live at https://travel-split-gamma.vercel.app
 - Evidence: screenshot of the reviewer's feedback (attached in my Module 3 document)
 - Feedback: The generated Start Planning tips feel too generic. The reviewer wants them tailored to the destination, the group's interests, and the number of people, so they actually help someone start planning that specific trip.
