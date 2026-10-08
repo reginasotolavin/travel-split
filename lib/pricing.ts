@@ -16,6 +16,7 @@ export const CONVERSION_SCENARIOS = {
 } as const;
 
 export const DEFAULT_ANNUAL_SHARE = 0.2;
+export const DEFAULT_ANNUAL_SHARE_PERCENT = 20;
 
 export function payingUsers(users: number, rate: number): number {
   return Math.floor(users * rate);
@@ -39,4 +40,15 @@ export function monthlyRevenue({
 export function annualRevenue(monthly: number, annualShare: number): number {
   const revenue = monthly * (12 * (1 - annualShare) + 10 * annualShare);
   return Math.round(revenue * 100) / 100;
+}
+
+export function annualRevenueFromPercent(monthly: number, annualSharePercent: number): number {
+  return annualRevenue(monthly, annualSharePercent / 100);
+}
+
+export function formatConversionRate(rate: number): string {
+  return new Intl.NumberFormat("es-MX", {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(rate);
 }
