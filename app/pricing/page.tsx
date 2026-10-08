@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,15 @@ import {
 } from "@/lib/pricing";
 
 type ScenarioKey = keyof typeof CONVERSION_SCENARIOS;
+
+type SavedScenario = {
+  id: string;
+  created_at: string;
+  name: string;
+  scenario: string;
+  monthly_revenue: number | null;
+  annual_revenue: number | null;
+};
 
 const scenarioKeys: ScenarioKey[] = ["pessimistic", "base", "optimistic"];
 const tierNames: ProductTier[] = ["Gratis", "Viajero", "Grupo Pro"];
@@ -49,6 +58,7 @@ function FeatureStatus({ status }: { status: "Built" | "Planned" }) {
 
 export default function PricingPage() {
   const [scenario, setScenario] = useState<ScenarioKey>("base");
+  const [name, setName] = useState("Base scenario");
   const [universityUsers, setUniversityUsers] = useState(
     String(PRICING_SEGMENTS.universityGroups.defaultUsers),
   );
@@ -58,6 +68,11 @@ export default function PricingPage() {
   const [annualSharePercent, setAnnualSharePercent] = useState(
     String(DEFAULT_ANNUAL_SHARE_PERCENT),
   );
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
+  const [isLoadingScenarios, setIsLoadingScenarios] = useState(true);
 
   const conversionRate = CONVERSION_SCENARIOS[scenario].rate;
   const monthly = monthlyRevenue({
@@ -66,6 +81,69 @@ export default function PricingPage() {
     rate: conversionRate,
   });
   const annual = annualRevenueFromPercent(monthly, Number(annualSharePercent));
+
+  async function loadSavedScenarios() {
+    try {
+      const response = await fetch("/api/pricing-scenarios");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to load saved scenarios.");
+      }
+      setSavedScenarios(Array.isArray(data.records) ? data.records : []);
+    } catch {
+      setSavedScenarios([]);
+    } finally {
+      setIsLoadingScenarios(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadSavedScenarios();
+  }, []);
+
+  async function handleSave() {
+    if (!name.trim()) {
+      setSaveSuccess(false);
+      setSaveMessage("Please enter a scenario name before saving.");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveMessage("");
+
+    try {
+      const response = await fetch("/api/pricing-scenarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          scenario: CONVERSION_SCENARIOS[scenario].name,
+          university_users: Number(universityUsers),
+          organizer_users: Number(organizerUsers),
+          annual_share: Number(annualSharePercent) / 100,
+          conversion_rate: conversionRate,
+          monthly_revenue: monthly,
+          annual_revenue: annual,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to save this scenario.");
+      }
+
+      setSaveSuccess(true);
+      setSaveMessage("Scenario saved successfully.");
+      await loadSavedScenarios();
+    } catch (error) {
+      setSaveSuccess(false);
+      setSaveMessage(
+        error instanceof Error ? error.message : "Unable to save this scenario.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -221,6 +299,41 @@ export default function PricingPage() {
                     />
                   </label>
                 </div>
+
+                <div className="mt-6 rounded-xl border border-border bg-background p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                    <label className="flex-1 text-sm font-medium text-foreground">
+                      Scenario name
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        placeholder="Example: Campus launch"
+                        className="mt-2 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm font-normal outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+                      />
+                    </label>
+                    <Button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className="h-11"
+                    >
+                      {isSaving ? "Saving..." : "Save scenario"}
+                    </Button>
+                  </div>
+                  {saveMessage && (
+                    <p
+                      role="status"
+                      className={`mt-3 text-sm ${
+                        saveSuccess
+                          ? "text-emerald-700"
+                          : "text-destructive"
+                      }`}
+                    >
+                      {saveMessage}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -249,6 +362,71 @@ export default function PricingPage() {
                 </article>
               </div>
             </div>
+          </section>
+
+          <section className="mb-16" aria-labelledby="saved-scenarios-heading">
+            <div className="mb-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                Saved scenarios
+              </p>
+              <h2
+                id="saved-scenarios-heading"
+                className="mt-2 font-display text-2xl font-semibold text-foreground"
+              >
+                Latest pricing ideas
+              </h2>
+            </div>
+
+            {isLoadingScenarios ? (
+              <p className="text-sm text-muted-foreground">Loading saved scenarios...</p>
+            ) : savedScenarios.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
+                No saved scenarios yet
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-left text-sm">
+                    <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+                      <tr>
+                        <th className="px-5 py-4 font-semibold">Name</th>
+                        <th className="px-5 py-4 font-semibold">Scenario</th>
+                        <th className="px-5 py-4 font-semibold">Monthly revenue</th>
+                        <th className="px-5 py-4 font-semibold">Annual revenue</th>
+                        <th className="px-5 py-4 font-semibold">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {savedScenarios.map((saved) => (
+                        <tr key={saved.id}>
+                          <td className="px-5 py-4 font-medium text-foreground">
+                            {saved.name}
+                          </td>
+                          <td className="px-5 py-4 text-card-foreground">
+                            {saved.scenario}
+                          </td>
+                          <td className="px-5 py-4 text-card-foreground">
+                            {saved.monthly_revenue !== null
+                              ? currency.format(Number(saved.monthly_revenue))
+                              : "—"}
+                          </td>
+                          <td className="px-5 py-4 text-card-foreground">
+                            {saved.annual_revenue !== null
+                              ? currency.format(Number(saved.annual_revenue))
+                              : "—"}
+                          </td>
+                          <td className="px-5 py-4 text-muted-foreground">
+                            {new Intl.DateTimeFormat("es-MX", {
+                              dateStyle: "medium",
+                            }).format(new Date(saved.created_at))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </section>
 
           <section aria-labelledby="assumptions-heading">

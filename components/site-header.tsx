@@ -9,11 +9,20 @@ export function SiteHeader() {
         <span className="hidden text-muted-foreground sm:inline">
           Your whole trip, one place.
         </span>
+        <Link className="text-primary underline-offset-4 hover:underline" href="/">
+          Home
+        </Link>
         <Link className="text-primary underline-offset-4 hover:underline" href="/core">
           Core
         </Link>
         <Link className="text-primary underline-offset-4 hover:underline" href="/research">
           Research
+        </Link>
+        <Link className="text-primary underline-offset-4 hover:underline" href="/product">
+          Product
+        </Link>
+        <Link className="text-primary underline-offset-4 hover:underline" href="/pricing">
+          Pricing
         </Link>
       </nav>
     </header>
