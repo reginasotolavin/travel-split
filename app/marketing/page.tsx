@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -11,6 +11,15 @@ import {
   SOCIAL_POSTS,
   VIDEO_SCRIPTS,
 } from "@/lib/marketing-content";
+
+type SavedAsset = {
+  id: string;
+  created_at: string;
+  asset_id: string;
+  asset_type: string;
+  title: string;
+  content: string;
+};
 
 const exportOrder = [
   "Brand system",
@@ -23,6 +32,25 @@ const exportOrder = [
 
 export default function MarketingPage() {
   const [copiedIds, setCopiedIds] = useState<Record<string, boolean>>({});
+  const [savedAssets, setSavedAssets] = useState<SavedAsset[]>([]);
+  const [saveState, setSaveState] = useState<Record<string, { status: "idle" | "success" | "error"; message: string }>>({});
+
+  async function loadSavedAssets() {
+    try {
+      const response = await fetch("/api/marketing-assets");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to load saved assets.");
+      }
+      setSavedAssets(Array.isArray(data.records) ? data.records : []);
+    } catch {
+      setSavedAssets([]);
+    }
+  }
+
+  useEffect(() => {
+    void loadSavedAssets();
+  }, []);
 
   const setCopied = (id: string) => {
     setCopiedIds((current) => ({ ...current, [id]: true }));
@@ -60,6 +88,40 @@ export default function MarketingPage() {
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
+  };
+
+  const handleSaveAsset = async (asset: {
+    asset_id: string;
+    asset_type: string;
+    title: string;
+    content: string;
+  }) => {
+    try {
+      const response = await fetch("/api/marketing-assets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(asset),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to save this asset.");
+      }
+
+      setSaveState((current) => ({
+        ...current,
+        [asset.asset_id]: { status: "success", message: "Saved" },
+      }));
+      await loadSavedAssets();
+    } catch (error) {
+      setSaveState((current) => ({
+        ...current,
+        [asset.asset_id]: {
+          status: "error",
+          message: error instanceof Error ? error.message : "Unable to save this asset.",
+        },
+      }));
+    }
   };
 
   return (
@@ -191,14 +253,41 @@ export default function MarketingPage() {
                 <p className="text-sm font-semibold uppercase tracking-wide text-primary">
                   Landing copy
                 </p>
-                <button
-                  type="button"
-                  onClick={() => handleCopy("landing-copy-full", buildLandingCopyText())}
-                  className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
-                >
-                  {copiedIds["landing-copy-full"] ? "Copied" : "Copy"}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy("landing-copy-full", buildLandingCopyText())}
+                    className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+                  >
+                    {copiedIds["landing-copy-full"] ? "Copied" : "Copy"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleSaveAsset({
+                        asset_id: "landing-copy-full",
+                        asset_type: "landing-copy",
+                        title: "Landing copy",
+                        content: buildLandingCopyText(),
+                      })
+                    }
+                    className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
+              {saveState["landing-copy-full"] ? (
+                <p
+                  className={`mt-3 text-xs ${
+                    saveState["landing-copy-full"].status === "success"
+                      ? "text-emerald-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {saveState["landing-copy-full"].message}
+                </p>
+              ) : null}
               <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-primary">
                 Headline
               </p>
@@ -251,14 +340,41 @@ export default function MarketingPage() {
                     <span className="inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
                       {post.channel}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(post.id, buildPostText(post))}
-                      className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
-                    >
-                      {copiedIds[post.id] ? "Copied" : "Copy"}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(post.id, buildPostText(post))}
+                        className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+                      >
+                        {copiedIds[post.id] ? "Copied" : "Copy"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSaveAsset({
+                            asset_id: post.id,
+                            asset_type: "post",
+                            title: post.hook,
+                            content: buildPostText(post),
+                          })
+                        }
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
+                  {saveState[post.id] ? (
+                    <p
+                      className={`mt-3 text-xs ${
+                        saveState[post.id].status === "success"
+                          ? "text-emerald-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {saveState[post.id].message}
+                    </p>
+                  ) : null}
                   <h3 className="mt-4 font-display text-lg font-semibold text-foreground">
                     {post.hook}
                   </h3>
@@ -290,14 +406,41 @@ export default function MarketingPage() {
                     <h3 className="font-display text-lg font-semibold text-foreground">
                       {script.title}
                     </h3>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(script.id, buildScriptText(script))}
-                      className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
-                    >
-                      {copiedIds[script.id] ? "Copied" : "Copy"}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(script.id, buildScriptText(script))}
+                        className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+                      >
+                        {copiedIds[script.id] ? "Copied" : "Copy"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSaveAsset({
+                            asset_id: script.id,
+                            asset_type: "script",
+                            title: script.title,
+                            content: buildScriptText(script),
+                          })
+                        }
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
+                  {saveState[script.id] ? (
+                    <p
+                      className={`mt-3 text-xs ${
+                        saveState[script.id].status === "success"
+                          ? "text-emerald-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {saveState[script.id].message}
+                    </p>
+                  ) : null}
                   <ol className="mt-5 space-y-4">
                     {script.scenes.map((scene, index) => (
                       <li key={scene.timing} className="flex gap-3">
@@ -357,6 +500,38 @@ export default function MarketingPage() {
                 </tbody>
               </table>
             </div>
+          </section>
+
+          <section className="mt-14" aria-labelledby="saved-assets-heading">
+            <h2
+              id="saved-assets-heading"
+              className="mb-5 font-display text-2xl font-semibold text-foreground"
+            >
+              Saved assets
+            </h2>
+            {savedAssets.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
+                No saved assets yet
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {savedAssets.map((asset) => (
+                  <li
+                    key={asset.id}
+                    className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-foreground">{asset.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {asset.asset_type} · {new Date(asset.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
       </main>
