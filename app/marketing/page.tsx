@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -9,16 +12,74 @@ import {
   VIDEO_SCRIPTS,
 } from "@/lib/marketing-content";
 
+const exportOrder = [
+  "Brand system",
+  "Persona",
+  "Landing copy",
+  "Social posts",
+  "Video scripts",
+  "14-day calendar",
+] as const;
+
 export default function MarketingPage() {
+  const [copiedIds, setCopiedIds] = useState<Record<string, boolean>>({});
+
+  const setCopied = (id: string) => {
+    setCopiedIds((current) => ({ ...current, [id]: true }));
+    window.setTimeout(() => {
+      setCopiedIds((current) => ({ ...current, [id]: false }));
+    }, 2000);
+  };
+
+  const handleCopy = async (id: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "true");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(id);
+    }
+  };
+
+  const handleExportAll = () => {
+    const content = buildExportText();
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "travel-split-marketing.txt";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-6xl px-6 py-10 md:py-16">
-          <header className="mb-12 max-w-2xl">
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-              Week 4 · Marketing engine
-            </span>
+          <header className="mb-12 max-w-4xl">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                Week 4 · Marketing engine
+              </span>
+              <button
+                type="button"
+                onClick={handleExportAll}
+                className="inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-secondary"
+              >
+                Export all
+              </button>
+            </div>
             <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl">
               How Travel Split reaches organizers.
             </h1>
@@ -32,18 +93,54 @@ export default function MarketingPage() {
               Brand system
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <InfoCard label="Name" value={BRAND_SYSTEM.name} />
-              <InfoCard label="Tagline" value={BRAND_SYSTEM.tagline} />
-              <InfoCard label="Voice" value={BRAND_SYSTEM.voice.description} />
-              <InfoCard label="Do" value={BRAND_SYSTEM.voice.do.join(" ")} />
-              <InfoCard label="Don't" value={BRAND_SYSTEM.voice.dont.join(" ")} />
               <InfoCard
-                label="Colors"
-                value={BRAND_SYSTEM.colors}
+                id="brand-system-name"
+                label="Name"
+                value={BRAND_SYSTEM.name}
+                onCopy={handleCopy}
+                copied={Boolean(copiedIds["brand-system-name"])}
               />
               <InfoCard
+                id="brand-system-tagline"
+                label="Tagline"
+                value={BRAND_SYSTEM.tagline}
+                onCopy={handleCopy}
+                copied={Boolean(copiedIds["brand-system-tagline"])}
+              />
+              <InfoCard
+                id="brand-system-voice"
+                label="Voice"
+                value={BRAND_SYSTEM.voice.description}
+                onCopy={handleCopy}
+                copied={Boolean(copiedIds["brand-system-voice"])}
+              />
+              <InfoCard
+                id="brand-system-do"
+                label="Do"
+                value={BRAND_SYSTEM.voice.do.join(" ")}
+                onCopy={handleCopy}
+                copied={Boolean(copiedIds["brand-system-do"])}
+              />
+              <InfoCard
+                id="brand-system-dont"
+                label="Don't"
+                value={BRAND_SYSTEM.voice.dont.join(" ")}
+                onCopy={handleCopy}
+                copied={Boolean(copiedIds["brand-system-dont"])}
+              />
+              <InfoCard
+                id="brand-system-colors"
+                label="Colors"
+                value={BRAND_SYSTEM.colors}
+                onCopy={handleCopy}
+                copied={Boolean(copiedIds["brand-system-colors"])}
+              />
+              <InfoCard
+                id="brand-system-type-and-logo"
                 label="Type and logo"
                 value={BRAND_SYSTEM.typeAndLogo}
+                onCopy={handleCopy}
+                copied={Boolean(copiedIds["brand-system-type-and-logo"])}
               />
             </div>
           </section>
@@ -56,9 +153,18 @@ export default function MarketingPage() {
               Persona
             </h2>
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <h3 className="font-display text-xl font-semibold text-foreground">
-                {PERSONA.name}, {PERSONA.age} (fictional)
-              </h3>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="font-display text-xl font-semibold text-foreground">
+                  {PERSONA.name}, {PERSONA.age} (fictional)
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => handleCopy("persona-full", buildPersonaText())}
+                  className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+                >
+                  {copiedIds["persona-full"] ? "Copied" : "Copy"}
+                </button>
+              </div>
               <dl className="mt-5 grid gap-5 sm:grid-cols-2">
                 <InfoItem label="Who" value={PERSONA.who} />
                 <InfoItem label="Pain" value={PERSONA.pain} />
@@ -81,7 +187,19 @@ export default function MarketingPage() {
               Landing copy
             </h2>
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                  Landing copy
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleCopy("landing-copy-full", buildLandingCopyText())}
+                  className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+                >
+                  {copiedIds["landing-copy-full"] ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-primary">
                 Headline
               </p>
               <h3 className="mt-2 font-display text-2xl font-bold text-foreground">
@@ -129,9 +247,18 @@ export default function MarketingPage() {
                   key={post.id}
                   className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                 >
-                  <span className="inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-                    {post.channel}
-                  </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                      {post.channel}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(post.id, buildPostText(post))}
+                      className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+                    >
+                      {copiedIds[post.id] ? "Copied" : "Copy"}
+                    </button>
+                  </div>
                   <h3 className="mt-4 font-display text-lg font-semibold text-foreground">
                     {post.hook}
                   </h3>
@@ -159,9 +286,18 @@ export default function MarketingPage() {
                   key={script.id}
                   className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                 >
-                  <h3 className="font-display text-lg font-semibold text-foreground">
-                    {script.title}
-                  </h3>
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-display text-lg font-semibold text-foreground">
+                      {script.title}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(script.id, buildScriptText(script))}
+                      className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+                    >
+                      {copiedIds[script.id] ? "Copied" : "Copy"}
+                    </button>
+                  </div>
                   <ol className="mt-5 space-y-4">
                     {script.scenes.map((scene, index) => (
                       <li key={scene.timing} className="flex gap-3">
@@ -229,10 +365,31 @@ export default function MarketingPage() {
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string }) {
+function InfoCard({
+  id,
+  label,
+  value,
+  onCopy,
+  copied,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onCopy: (id: string, text: string) => void;
+  copied: boolean;
+}) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <p className="text-sm font-semibold text-foreground">{label}</p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-semibold text-foreground">{label}</p>
+        <button
+          type="button"
+          onClick={() => onCopy(id, `${label}: ${value}`)}
+          className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         {value}
       </p>
@@ -249,4 +406,92 @@ function InfoItem({ label, value }: { label: string; value: string }) {
       </dd>
     </div>
   );
+}
+
+function buildPersonaText() {
+  return [
+    `Name: ${PERSONA.name}`,
+    `Age: ${PERSONA.age}`,
+    `Who: ${PERSONA.who}`,
+    `Pain: ${PERSONA.pain}`,
+    `Goal: ${PERSONA.goal}`,
+    `Where she is: ${PERSONA.whereSheIs}`,
+    `What she needs to hear: ${PERSONA.whatSheNeedsToHear}`,
+    `Objection: ${PERSONA.objection}`,
+  ].join("\n");
+}
+
+function buildLandingCopyText() {
+  return [
+    `Headline: ${LANDING_COPY.headline}`,
+    `Subheadline: ${LANDING_COPY.subheadline}`,
+    `Benefits: ${LANDING_COPY.benefits.join("; ")}`,
+    `CTA: ${LANDING_COPY.cta}`,
+    `Honesty line: ${LANDING_COPY.honestyLine}`,
+  ].join("\n");
+}
+
+function buildPostText(post: (typeof SOCIAL_POSTS)[number]) {
+  return [
+    `${post.channel}`,
+    `${post.hook}`,
+    `${post.caption}`,
+    `${post.cta}`,
+  ].join("\n");
+}
+
+function buildScriptText(script: (typeof VIDEO_SCRIPTS)[number]) {
+  return [
+    `${script.title}`,
+    ...script.scenes.map(
+      (scene) => `${scene.timing}: ${scene.text}`,
+    ),
+  ].join("\n");
+}
+
+function buildExportText() {
+  const sections = [
+    "Brand system",
+    `Name: ${BRAND_SYSTEM.name}`,
+    `Tagline: ${BRAND_SYSTEM.tagline}`,
+    `Voice: ${BRAND_SYSTEM.voice.description}`,
+    `Do: ${BRAND_SYSTEM.voice.do.join("; ")}`,
+    `Don't: ${BRAND_SYSTEM.voice.dont.join("; ")}`,
+    `Colors: ${BRAND_SYSTEM.colors}`,
+    `Type and logo: ${BRAND_SYSTEM.typeAndLogo}`,
+    "",
+    "Persona",
+    `Name: ${PERSONA.name}`,
+    `Age: ${PERSONA.age}`,
+    `Who: ${PERSONA.who}`,
+    `Pain: ${PERSONA.pain}`,
+    `Goal: ${PERSONA.goal}`,
+    `Where she is: ${PERSONA.whereSheIs}`,
+    `What she needs to hear: ${PERSONA.whatSheNeedsToHear}`,
+    `Objection: ${PERSONA.objection}`,
+    "",
+    "Landing copy",
+    buildLandingCopyText(),
+    "",
+    "Social posts",
+    ...SOCIAL_POSTS.flatMap((post) => [
+      `${post.id} | ${post.channel}`,
+      `${post.hook}`,
+      `${post.caption}`,
+      `${post.cta}`,
+      "",
+    ]),
+    "Video scripts",
+    ...VIDEO_SCRIPTS.flatMap((script) => [
+      `${script.id} | ${script.title}`,
+      ...script.scenes.map((scene) => `${scene.timing}: ${scene.text}`),
+      "",
+    ]),
+    "14-day calendar",
+    ...MARKETING_CALENDAR.map(
+      (day) => `${day.id} | Day ${day.day} | ${day.channel} | ${day.asset} | ${day.goal}`,
+    ),
+  ];
+
+  return sections.join("\n");
 }
