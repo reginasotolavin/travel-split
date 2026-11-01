@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import {
@@ -43,6 +43,18 @@ export default function MarketingPage() {
     headline: { A: 0, B: 0 },
     button: { A: 0, B: 0 },
   });
+  const [recordedVotes, setRecordedVotes] = useState<Record<"headline" | "button", boolean>>({
+    headline: false,
+    button: false,
+  });
+  const [votesSending, setVotesSending] = useState<Record<"headline" | "button", boolean>>({
+    headline: false,
+    button: false,
+  });
+  const voteInFlight = useRef<Record<"headline" | "button", boolean>>({
+    headline: false,
+    button: false,
+  });
 
   async function loadSavedAssets() {
     try {
@@ -81,6 +93,14 @@ export default function MarketingPage() {
   useEffect(() => {
     void loadSavedAssets();
     void loadVoteCounts();
+    try {
+      setRecordedVotes({
+        headline: window.localStorage.getItem("travel-split-ab-vote-headline") === "true",
+        button: window.localStorage.getItem("travel-split-ab-vote-button") === "true",
+      });
+    } catch (error) {
+      console.error("Unable to read saved A/B votes.", error);
+    }
   }, []);
 
   const setCopied = (id: string) => {
@@ -156,6 +176,12 @@ export default function MarketingPage() {
   };
 
   const handleVote = async (testId: "headline" | "button", variant: "A" | "B") => {
+    if (recordedVotes[testId] || voteInFlight.current[testId]) {
+      return;
+    }
+
+    voteInFlight.current[testId] = true;
+    setVotesSending((current) => ({ ...current, [testId]: true }));
     try {
       const response = await fetch("/api/ab-votes", {
         method: "POST",
@@ -168,9 +194,18 @@ export default function MarketingPage() {
         throw new Error(data.error || "Unable to save your vote.");
       }
 
+      setRecordedVotes((current) => ({ ...current, [testId]: true }));
+      try {
+        window.localStorage.setItem(`travel-split-ab-vote-${testId}`, "true");
+      } catch (error) {
+        console.error("Unable to save your A/B vote locally.", error);
+      }
       await loadVoteCounts();
     } catch {
       await loadVoteCounts();
+    } finally {
+      voteInFlight.current[testId] = false;
+      setVotesSending((current) => ({ ...current, [testId]: false }));
     }
   };
 
@@ -540,8 +575,9 @@ export default function MarketingPage() {
                       </span>
                       <button
                         type="button"
+                        disabled={recordedVotes.headline || votesSending.headline}
                         onClick={() => handleVote("headline", "A")}
-                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Vote A
                       </button>
@@ -558,14 +594,20 @@ export default function MarketingPage() {
                       </span>
                       <button
                         type="button"
+                        disabled={recordedVotes.headline || votesSending.headline}
                         onClick={() => handleVote("headline", "B")}
-                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Vote B
                       </button>
                     </div>
                   </div>
                 </div>
+                {recordedVotes.headline && (
+                  <p role="status" className="mt-4 text-sm text-muted-foreground">
+                    Thanks, your vote was recorded
+                  </p>
+                )}
               </article>
 
               <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -585,8 +627,9 @@ export default function MarketingPage() {
                       </span>
                       <button
                         type="button"
+                        disabled={recordedVotes.button || votesSending.button}
                         onClick={() => handleVote("button", "A")}
-                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Vote A
                       </button>
@@ -603,14 +646,20 @@ export default function MarketingPage() {
                       </span>
                       <button
                         type="button"
+                        disabled={recordedVotes.button || votesSending.button}
                         onClick={() => handleVote("button", "B")}
-                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Vote B
                       </button>
                     </div>
                   </div>
                 </div>
+                {recordedVotes.button && (
+                  <p role="status" className="mt-4 text-sm text-muted-foreground">
+                    Thanks, your vote was recorded
+                  </p>
+                )}
               </article>
             </div>
           </section>
