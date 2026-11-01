@@ -21,6 +21,11 @@ type SavedAsset = {
   content: string;
 };
 
+type VoteCounts = {
+  headline: { A: number; B: number };
+  button: { A: number; B: number };
+};
+
 const exportOrder = [
   "Brand system",
   "Persona",
@@ -34,6 +39,10 @@ export default function MarketingPage() {
   const [copiedIds, setCopiedIds] = useState<Record<string, boolean>>({});
   const [savedAssets, setSavedAssets] = useState<SavedAsset[]>([]);
   const [saveState, setSaveState] = useState<Record<string, { status: "idle" | "success" | "error"; message: string }>>({});
+  const [voteCounts, setVoteCounts] = useState<VoteCounts>({
+    headline: { A: 0, B: 0 },
+    button: { A: 0, B: 0 },
+  });
 
   async function loadSavedAssets() {
     try {
@@ -48,8 +57,30 @@ export default function MarketingPage() {
     }
   }
 
+  async function loadVoteCounts() {
+    try {
+      const response = await fetch("/api/ab-votes");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to load voting data.");
+      }
+      setVoteCounts(
+        data.counts || {
+          headline: { A: 0, B: 0 },
+          button: { A: 0, B: 0 },
+        },
+      );
+    } catch {
+      setVoteCounts({
+        headline: { A: 0, B: 0 },
+        button: { A: 0, B: 0 },
+      });
+    }
+  }
+
   useEffect(() => {
     void loadSavedAssets();
+    void loadVoteCounts();
   }, []);
 
   const setCopied = (id: string) => {
@@ -121,6 +152,25 @@ export default function MarketingPage() {
           message: error instanceof Error ? error.message : "Unable to save this asset.",
         },
       }));
+    }
+  };
+
+  const handleVote = async (testId: "headline" | "button", variant: "A" | "B") => {
+    try {
+      const response = await fetch("/api/ab-votes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test_id: testId, variant }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to save your vote.");
+      }
+
+      await loadVoteCounts();
+    } catch {
+      await loadVoteCounts();
     }
   };
 
@@ -460,6 +510,108 @@ export default function MarketingPage() {
                   </ol>
                 </article>
               ))}
+            </div>
+          </section>
+
+          <section className="mb-14" aria-labelledby="ab-tests-heading">
+            <h2
+              id="ab-tests-heading"
+              className="mb-5 font-display text-2xl font-semibold text-foreground"
+            >
+              A/B tests
+            </h2>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                  headline
+                </p>
+                <p className="mt-3 text-base font-medium text-foreground">
+                  Which headline would make you want to try this app?
+                </p>
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-background p-4">
+                    <p className="text-sm font-semibold text-foreground">A</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Your whole trip, one place.
+                    </p>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {voteCounts.headline.A} votes
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleVote("headline", "A")}
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                      >
+                        Vote A
+                      </button>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background p-4">
+                    <p className="text-sm font-semibold text-foreground">B</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Stop organizing group trips in the chat.
+                    </p>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {voteCounts.headline.B} votes
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleVote("headline", "B")}
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                      >
+                        Vote B
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                  button
+                </p>
+                <p className="mt-3 text-base font-medium text-foreground">
+                  Which button would you click?
+                </p>
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-background p-4">
+                    <p className="text-sm font-semibold text-foreground">A</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Start planning</p>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {voteCounts.button.A} votes
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleVote("button", "A")}
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                      >
+                        Vote A
+                      </button>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border bg-background p-4">
+                    <p className="text-sm font-semibold text-foreground">B</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Try Trip Starter free
+                    </p>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {voteCounts.button.B} votes
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleVote("button", "B")}
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                      >
+                        Vote B
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
             </div>
           </section>
 
