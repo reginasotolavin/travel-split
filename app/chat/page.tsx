@@ -50,9 +50,62 @@ export default function ChatPage() {
   const [groupSize, setGroupSize] = useState<number | null>(null);
   const [budget, setBudget] = useState<ChatBudget | null>(null);
   const [guardrailTriggered, setGuardrailTriggered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   function addAssistantMessage(content: string) {
     setMessages((current) => [...current, { role: "assistant", content }]);
+  }
+
+  async function requestAssistant(followUp?: string) {
+    if (groupSize === null || budget === null) return;
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tripSummary: { destination, groupSize, budget },
+          ...(followUp ? { followUp } : {}),
+        }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!response.ok) {
+        throw new Error(`Chat API returned status ${response.status}.`);
+      }
+
+      const result: unknown = await response.json();
+      if (
+        !result ||
+        typeof result !== "object" ||
+        !("answer" in result) ||
+        typeof result.answer !== "string" ||
+        !result.answer.trim()
+      ) {
+        throw new Error("Chat API returned an invalid answer.");
+      }
+      addAssistantMessage(result.answer.trim());
+    } catch (error) {
+      console.error("Chat request failed; showing the simulated response.", error);
+      setMessages((current) => [
+        ...current,
+        followUp
+          ? {
+              role: "assistant",
+              content:
+                "I can't answer that right now. Try asking about your trip plan.",
+              simulated: true,
+            }
+          : {
+              role: "assistant",
+              content: "",
+              tips: templateTips(destination, groupSize, budget),
+              simulated: true,
+            },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -70,6 +123,11 @@ export default function ChatPage() {
 
     setInput("");
     setMessages((current) => [...current, { role: "user", content: text }]);
+
+    if (step === "done") {
+      void requestAssistant(text);
+      return;
+    }
 
     if (step === "destination") {
       setDestination(text);
@@ -134,14 +192,9 @@ export default function ChatPage() {
     setMessages((current) => [
       ...current,
       { role: "user", content: "Yes, show my tips" },
-      {
-        role: "assistant",
-        content: "",
-        tips: templateTips(destination, groupSize, budget),
-        simulated: true,
-      },
     ]);
     setStep("done");
+    void requestAssistant();
   }
 
   return (
@@ -176,7 +229,7 @@ export default function ChatPage() {
                       message.role === "user"
                         ? "bg-teal-800 text-white"
                         : "bg-teal-50 text-foreground"
-                    }`}
+                    } ${message.role === "assistant" ? "whitespace-pre-wrap" : ""}`}
                   >
                     {message.simulated && (
                       <p className="mb-2 text-xs text-muted-foreground">
@@ -203,6 +256,7 @@ export default function ChatPage() {
                   type="button"
                   className="h-10 rounded-xl bg-teal-800 px-4 text-white hover:bg-teal-900"
                   onClick={showTips}
+                  disabled={isLoading}
                 >
                   Yes, show my tips
                 </Button>
@@ -217,7 +271,7 @@ export default function ChatPage() {
               </div>
             )}
 
-            {step !== "confirmation" && step !== "done" && (
+            {step !== "confirmation" && (
               <form
                 className="mt-4 flex gap-2 border-t border-border pt-4"
                 onSubmit={handleSubmit}
@@ -230,16 +284,27 @@ export default function ChatPage() {
                   autoComplete="off"
                   className="h-11 min-w-0 flex-1 rounded-xl border border-input bg-background px-4 text-sm outline-none transition focus-visible:border-teal-700 focus-visible:ring-2 focus-visible:ring-teal-700/20"
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Type your answer..."
                   value={input}
+                  disabled={isLoading}
+                  placeholder={
+                    step === "done"
+                      ? "Ask a follow-up about your trip..."
+                      : "Type your answer..."
+                  }
                 />
                 <Button
                   type="submit"
                   className="h-11 rounded-xl bg-teal-800 px-5 text-white hover:bg-teal-900"
+                  disabled={isLoading}
                 >
-                  Send
+                  {isLoading ? "Thinking..." : "Send"}
                 </Button>
               </form>
+            )}
+            {isLoading && (
+              <p className="mt-3 text-center text-sm text-muted-foreground" aria-live="polite">
+                The assistant is preparing an answer...
+              </p>
             )}
           </div>
 
