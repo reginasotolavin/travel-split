@@ -5,6 +5,8 @@ import {
   type ChatBudget,
 } from "@/lib/chat-rules";
 
+export const maxDuration = 30;
+
 type TripSummary = {
   destination: string;
   groupSize: number;
@@ -92,9 +94,13 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTIONS }] },
           contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: { maxOutputTokens: 512, temperature: 0.6 },
+          generationConfig: {
+            maxOutputTokens: 400,
+            temperature: 0.6,
+            thinkingConfig: { thinkingLevel: "MINIMAL" },
+          },
         }),
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(24_000),
       },
     );
   } catch (error) {

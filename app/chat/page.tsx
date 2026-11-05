@@ -74,7 +74,7 @@ export default function ChatPage() {
           tripSummary: { destination, groupSize, budget },
           ...(followUp ? { followUp } : {}),
         }),
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(25_000),
       });
       if (!response.ok) {
         throw new Error(`Chat API returned status ${response.status}.`);
@@ -301,6 +301,17 @@ export default function ChatPage() {
                   </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div
+                    className="max-w-[88%] rounded-2xl bg-teal-50 px-4 py-3 text-sm text-foreground"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Thinking about your trip...
+                  </div>
+                </div>
+              )}
             </div>
 
             {step === "confirmation" && (
@@ -434,11 +445,6 @@ export default function ChatPage() {
                   {isLoading ? "Thinking..." : "Send"}
                 </Button>
               </form>
-            )}
-            {isLoading && (
-              <p className="mt-3 text-center text-sm text-muted-foreground" aria-live="polite">
-                The assistant is preparing an answer...
-              </p>
             )}
           </div>
 
