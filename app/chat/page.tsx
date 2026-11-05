@@ -51,6 +51,12 @@ export default function ChatPage() {
   const [budget, setBudget] = useState<ChatBudget | null>(null);
   const [guardrailTriggered, setGuardrailTriggered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRating, setIsRating] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingError, setRatingError] = useState("");
 
   function addAssistantMessage(content: string) {
     setMessages((current) => [...current, { role: "assistant", content }]);
@@ -197,6 +203,53 @@ export default function ChatPage() {
     void requestAssistant();
   }
 
+  async function submitRating(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (rating === null || groupSize === null || budget === null) return;
+
+    setIsSubmittingRating(true);
+    setRatingError("");
+    try {
+      const response = await fetch("/api/chat-tests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destination,
+          groupSize,
+          budget: budget === "not sure" ? budget : String(budget),
+          messageCount: messages.filter((message) => message.role === "user").length,
+          guardrailTriggered,
+          usedFallback: messages.some((message) => message.simulated),
+          rating,
+          comment,
+        }),
+      });
+
+      const result: unknown = await response.json();
+      if (!response.ok) {
+        const errorMessage =
+          result &&
+          typeof result === "object" &&
+          "error" in result &&
+          typeof result.error === "string"
+            ? result.error
+            : "Unable to save your feedback.";
+        throw new Error(errorMessage);
+      }
+
+      setRatingSubmitted(true);
+      setIsRating(false);
+    } catch (error) {
+      setRatingError(
+        error instanceof Error
+          ? error.message
+          : "Unable to save your feedback. Please try again.",
+      );
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
@@ -269,6 +322,87 @@ export default function ChatPage() {
                   Edit
                 </Button>
               </div>
+            )}
+
+            {step === "done" && !ratingSubmitted && (
+              <div className="mt-4 border-t border-border pt-4">
+                {!isRating ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 rounded-xl px-4"
+                    onClick={() => setIsRating(true)}
+                    disabled={isLoading}
+                  >
+                    Finish and rate
+                  </Button>
+                ) : (
+                  <form className="space-y-4" onSubmit={submitRating}>
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-medium">
+                        How was your experience?
+                      </legend>
+                      <div className="flex gap-2" role="group" aria-label="Rating from 1 to 5 stars">
+                        {[1, 2, 3, 4, 5].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            aria-label={`${value} star${value === 1 ? "" : "s"}`}
+                            aria-pressed={rating === value}
+                            className={`rounded-md px-1 text-2xl transition-colors ${
+                              rating !== null && value <= rating
+                                ? "text-amber-500"
+                                : "text-muted-foreground"
+                            }`}
+                            onClick={() => setRating(value)}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <label className="block text-sm font-medium" htmlFor="chat-rating-comment">
+                      Comment (optional)
+                      <textarea
+                        id="chat-rating-comment"
+                        className="mt-2 min-h-20 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm font-normal outline-none transition focus-visible:border-teal-700 focus-visible:ring-2 focus-visible:ring-teal-700/20"
+                        maxLength={1000}
+                        onChange={(event) => setComment(event.target.value)}
+                        value={comment}
+                      />
+                    </label>
+                    {ratingError && (
+                      <p className="text-sm text-destructive" role="alert">
+                        {ratingError}
+                      </p>
+                    )}
+                    <div className="flex gap-3">
+                      <Button
+                        type="submit"
+                        className="h-10 rounded-xl bg-teal-800 px-4 text-white hover:bg-teal-900"
+                        disabled={rating === null || isSubmittingRating}
+                      >
+                        {isSubmittingRating ? "Submitting..." : "Submit"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 rounded-xl px-4"
+                        onClick={() => setIsRating(false)}
+                        disabled={isSubmittingRating}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {ratingSubmitted && (
+              <p className="mt-4 border-t border-border pt-4 text-sm text-teal-800" role="status">
+                Thanks for your feedback
+              </p>
             )}
 
             {step !== "confirmation" && (
