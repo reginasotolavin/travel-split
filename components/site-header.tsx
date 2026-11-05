@@ -24,6 +24,9 @@ export function SiteHeader() {
         <Link className="text-primary underline-offset-4 hover:underline" href="/pricing">
           Pricing
         </Link>
+        <Link className="text-primary underline-offset-4 hover:underline" href="/chat">
+          Chat
+        </Link>
         <Link className="text-primary underline-offset-4 hover:underline" href="/marketing">
           Marketing
         </Link>
