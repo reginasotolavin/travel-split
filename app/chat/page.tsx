@@ -90,7 +90,7 @@ export default function ChatPage() {
       ) {
         throw new Error("Chat API returned an invalid answer.");
       }
-      addAssistantMessage(result.answer.trim());
+      addAssistantMessage(result.answer.trim().replace(/\*/g, ""));
     } catch (error) {
       console.error("Chat request failed; showing the simulated response.", error);
       setMessages((current) => [
