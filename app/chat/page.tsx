@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,9 @@ export default function ChatPage() {
   const [groupSize, setGroupSize] = useState<number | null>(null);
   const [budget, setBudget] = useState<ChatBudget | null>(null);
   const [guardrailTriggered, setGuardrailTriggered] = useState(false);
+  const guardrailTriggeredRef = useRef(false);
+  const usedFallbackRef = useRef(false);
+  const messageCountRef = useRef(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isRating, setIsRating] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
@@ -60,6 +63,11 @@ export default function ChatPage() {
 
   function addAssistantMessage(content: string) {
     setMessages((current) => [...current, { role: "assistant", content }]);
+  }
+
+  function addUserMessage(content: string) {
+    messageCountRef.current += 1;
+    setMessages((current) => [...current, { role: "user", content }]);
   }
 
   async function requestAssistant(followUp?: string) {
@@ -93,6 +101,7 @@ export default function ChatPage() {
       addAssistantMessage(result.answer.trim().replace(/\*/g, ""));
     } catch (error) {
       console.error("Chat request failed; showing the simulated response.", error);
+      usedFallbackRef.current = true;
       setMessages((current) => [
         ...current,
         followUp
@@ -121,6 +130,7 @@ export default function ChatPage() {
 
     const guardrail = checkGuardrail(text);
     if (guardrail) {
+      guardrailTriggeredRef.current = true;
       setGuardrailTriggered(true);
       setInput("");
       addAssistantMessage(GUARDRAIL_REPLIES[guardrail]);
@@ -128,7 +138,7 @@ export default function ChatPage() {
     }
 
     setInput("");
-    setMessages((current) => [...current, { role: "user", content: text }]);
+    addUserMessage(text);
 
     if (step === "done") {
       void requestAssistant(text);
@@ -186,19 +196,13 @@ export default function ChatPage() {
     setGroupSize(null);
     setBudget(null);
     setStep("destination");
-    setMessages((current) => [
-      ...current,
-      { role: "user", content: "Edit" },
-      { role: "assistant", content: "Let's start over. Where are you going?" },
-    ]);
+    addUserMessage("Edit");
+    addAssistantMessage("Let's start over. Where are you going?");
   }
 
   function showTips() {
     if (groupSize === null || budget === null) return;
-    setMessages((current) => [
-      ...current,
-      { role: "user", content: "Yes, show my tips" },
-    ]);
+    addUserMessage("Yes, show my tips");
     setStep("done");
     void requestAssistant();
   }
@@ -217,9 +221,9 @@ export default function ChatPage() {
           destination,
           groupSize,
           budget: budget === "not sure" ? budget : String(budget),
-          messageCount: messages.filter((message) => message.role === "user").length,
-          guardrailTriggered,
-          usedFallback: messages.some((message) => message.simulated),
+          messageCount: messageCountRef.current,
+          guardrailTriggered: guardrailTriggeredRef.current,
+          usedFallback: usedFallbackRef.current,
           rating,
           comment,
         }),
