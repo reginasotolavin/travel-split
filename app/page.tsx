@@ -1,7 +1,8 @@
+import Link from 'next/link'
+import Image from 'next/image'
 import { SiteHeader } from '@/components/site-header'
 import { Highlights } from '@/components/highlights'
 import { SiteFooter } from '@/components/site-footer'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 export default function Page() {
@@ -28,6 +29,12 @@ export default function Page() {
                 <Button size="lg" className="w-full sm:w-auto">
                   Start planning
                 </Button>
+                <Link
+                  href="/demo"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-teal-800 px-7 text-base font-medium text-white shadow-md transition-all hover:bg-teal-900"
+                >
+                  Take the tour
+                </Link>
                 <p className="text-sm text-muted-foreground">
                   Plan together. Travel easier.
                 </p>
