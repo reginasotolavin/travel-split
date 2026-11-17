@@ -38,14 +38,34 @@ function DemoPageContent() {
           {currentStep.agentMap.map((row) => (
             <div key={row.title} className="space-y-3">
               <h3 className="text-lg font-semibold text-foreground">{row.title}</h3>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {row.boxes.map((box) => (
-                  <div key={box.name} className="rounded-2xl border border-border bg-background p-4 shadow-sm">
-                    <div className="mb-2 text-sm font-semibold text-teal-700">{box.name}</div>
-                    <p className="text-sm leading-6 text-muted-foreground">{box.line}</p>
+              <div className="flex flex-col gap-2 md:flex-row md:items-stretch">
+                {row.boxes.map((box, index) => (
+                  <div key={box.name} className="flex flex-col items-center gap-2 md:min-w-0 md:flex-1 md:flex-row">
+                    <div className="w-full rounded-2xl border border-border bg-background p-4 shadow-sm md:min-h-full">
+                      <div className="mb-2 text-sm font-semibold text-teal-700">{box.name}</div>
+                      <p className="text-sm leading-6 text-muted-foreground">{box.line}</p>
+                    </div>
+                    {index < row.boxes.length - 1 && (
+                      <>
+                        <span aria-hidden="true" className="text-xl font-semibold text-teal-700 md:hidden">
+                          ↓
+                        </span>
+                        <span aria-hidden="true" className="hidden text-xl font-semibold text-teal-700 md:inline">
+                          →
+                        </span>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
+              {row.sideBox && (
+                <div className="mt-3 flex justify-center md:justify-end">
+                  <div className="w-full rounded-2xl border border-dashed border-border bg-muted/50 p-4 shadow-sm md:max-w-xs">
+                    <div className="mb-2 text-sm font-semibold text-teal-700">{row.sideBox.name}</div>
+                    <p className="text-sm leading-6 text-muted-foreground">{row.sideBox.line}</p>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -114,9 +134,11 @@ function DemoPageContent() {
 
               <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
                 <span>Step {currentStepNumber} of {DEMO_STEPS.length}</span>
-                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badgeStyles[currentStep.badge]}`}>
-                  {currentStep.badge}
-                </span>
+                {currentStep.badge && (
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badgeStyles[currentStep.badge]}`}>
+                    {currentStep.badge}
+                  </span>
+                )}
               </div>
             </div>
 

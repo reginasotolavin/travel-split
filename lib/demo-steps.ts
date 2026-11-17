@@ -3,7 +3,7 @@ export type DemoBadge = 'Built' | 'Simulated' | 'Planned'
 export type DemoStep = {
   id: number
   title: string
-  badge: DemoBadge
+  badge?: DemoBadge
   page?: string
   text: string
   kind?: 'agent-map' | 'roadmap' | 'placeholder'
@@ -16,6 +16,7 @@ export type DemoStep = {
   agentMap?: {
     title: string
     boxes: Array<{ name: string; line: string }>
+    sideBox?: { name: string; line: string }
   }[]
 }
 
@@ -23,7 +24,6 @@ export const DEMO_STEPS: DemoStep[] = [
   {
     id: 1,
     title: 'Welcome to Travel Split',
-    badge: 'Built',
     text:
       'Travel Split helps the friend who always organizes the group trip. This tour shows every part of the app in about 5 minutes, and tells you clearly what is built, simulated or planned.',
   },
@@ -100,8 +100,8 @@ export const DEMO_STEPS: DemoStep[] = [
           { name: 'Human checkpoint', line: 'the user confirms the trip summary' },
           { name: 'Gemini', line: 'free tier, writes the tips' },
           { name: 'Supabase', line: 'stores summaries, ratings and other records' },
-          { name: 'Trip Starter', line: 'templates, simulated, no AI' },
         ],
+        sideBox: { name: 'Trip Starter', line: 'templates, simulated, no AI' },
       },
     ],
   },
