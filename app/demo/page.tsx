@@ -124,6 +124,31 @@ function DemoPageContent() {
           </div>
 
           <div className="rounded-[2rem] border border-border bg-card p-6 shadow-lg shadow-teal-950/5 md:p-8">
+            <nav aria-label="Tour steps" className="mb-6 flex flex-wrap gap-2">
+              {DEMO_STEPS.map((step) => {
+                const stepLabel = step.page
+                  ? step.page.slice(1).replace(/^\w/, (letter) => letter.toUpperCase())
+                  : step.title
+
+                return (
+                  <button
+                    key={step.id}
+                    type="button"
+                    aria-label={`Go to step ${step.id}: ${stepLabel}`}
+                    aria-current={step.id === currentStepNumber ? 'step' : undefined}
+                    onClick={() => changeStep(step.id)}
+                    className={
+                      step.id === currentStepNumber
+                        ? 'inline-flex h-9 w-9 items-center justify-center rounded-full border border-teal-700 bg-teal-700 text-sm font-semibold text-white'
+                        : 'inline-flex h-9 w-9 items-center justify-center rounded-full border border-teal-700 bg-background text-sm font-semibold text-teal-800 transition hover:bg-teal-50'
+                    }
+                  >
+                    {step.id}
+                  </button>
+                )
+              })}
+            </nav>
+
             <div className="mb-6">
               <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
