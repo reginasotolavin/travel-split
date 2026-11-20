@@ -6,7 +6,7 @@ export type DemoStep = {
   badge?: DemoBadge
   page?: string
   text: string
-  kind?: 'agent-map' | 'roadmap' | 'placeholder'
+  kind?: 'agent-map' | 'roadmap' | 'testing-impact' | 'placeholder'
   roadmap?: Array<{
     priority: number
     title: string
@@ -18,6 +18,16 @@ export type DemoStep = {
     boxes: Array<{ name: string; line: string }>
     sideBox?: { name: string; line: string }
   }[]
+  testingSummary?: {
+    testers: Array<{
+      tester: string
+      whatTheyTested: string
+      rating: string
+      quote: string
+    }>
+    regressionLine: string
+    impactItems: Array<{ label: string; text: string }>
+  }
 }
 
 export const DEMO_STEPS: DemoStep[] = [
@@ -109,8 +119,72 @@ export const DEMO_STEPS: DemoStep[] = [
     id: 9,
     title: 'Testing and impact',
     badge: 'Built',
-    kind: 'placeholder',
-    text: 'This section will be filled in after the final user feedback is added.',
+    kind: 'testing-impact',
+    text: 'What testers learned and how their feedback shaped the product.',
+    testingSummary: {
+      testers: [
+        {
+          tester: 'U1 Natalia',
+          whatTheyTested: '/chat, trip to Italy (Module 5)',
+          rating: '5/5',
+          quote: 'The tips felt pretty good, a bit generic, but they work.',
+        },
+        {
+          tester: 'U2 Ximena',
+          whatTheyTested: '/chat, trip to San Diego (Module 5)',
+          rating: '5/5',
+          quote: '100% I would use it for my trips.',
+        },
+        {
+          tester: 'U3 Regina R.',
+          whatTheyTested: '/chat, trip to the Bahamas (Module 5)',
+          rating: '5/5',
+          quote: 'I liked that it gave me tips to save money and go to more local places.',
+        },
+        {
+          tester: 'U4 Regina S.',
+          whatTheyTested: 'Whole app through /demo (Module 6)',
+          rating: '5/5',
+          quote: 'Planning a trip takes time, and this makes it much simpler and more practical.',
+        },
+        {
+          tester: 'U5 Ana Camila',
+          whatTheyTested: 'Whole app through /demo, trip to Milan (Module 6)',
+          rating: '5/5',
+          quote: 'It makes deciding easier, because you get concrete proposals.',
+        },
+        {
+          tester: 'U6 Valeria',
+          whatTheyTested: 'Whole app through /demo (Module 6)',
+          rating: '5/5',
+          quote: 'I liked that it helps plan an itinerary, but it can be very general.',
+        },
+      ],
+      regressionLine:
+        'Full-site regression test (Nov 18-19, 2026): 10 of 12 checks passed on the first run. R3 (/core missing a Simulated label) and R8 (homework not counted by the guardrail) failed, were fixed and retested. All 12 checks pass now.',
+      impactItems: [
+        {
+          label: 'Who it helps',
+          text: 'The person who organizes group trips and gets stuck answering the same questions in long group chats.',
+        },
+        {
+          label: 'Evidence',
+          text: '6 external testers, all rated it 5/5. U1-U3 tested the trip assistant in Module 5; U4-U6 tested the whole app through this tour. All 6 said they would use it, at least for trip tips, and nobody found anything broken.',
+        },
+        {
+          label: 'What users get today',
+          text: 'Built - research, pricing simulator, marketing, trip assistant, dashboard. Simulated - Trip Starter templates. Planned - expense splitting, group invites, reservations, itinerary.',
+        },
+        {
+          label: 'Limits users noticed',
+          text: 'Tips can feel generic (U1, U6), the app helps more with tips than with planning the whole trip (U3), and reaching the chat step took too many clicks (U5).',
+        },
+        {
+          label: 'What changed because of testing',
+          text: 'Numbered buttons to jump to any step (from U5), a Simulated label on the Trip Starter (from regression R3), and homework or coding requests now counted by the guardrail (from regression R8).',
+        },
+      ],
+    },
   },
   {
     id: 10,

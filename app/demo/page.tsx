@@ -32,6 +32,54 @@ function DemoPageContent() {
   }
 
   const renderCustomContent = () => {
+    if (currentStep.kind === 'testing-impact' && currentStep.testingSummary) {
+      const { testers, regressionLine, impactItems } = currentStep.testingSummary
+
+      return (
+        <div className="space-y-8">
+          <section>
+            <h3 className="mb-3 text-xl font-semibold text-foreground">Testing summary</h3>
+            <div className="overflow-x-auto rounded-2xl border border-border">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="bg-muted/70 text-foreground">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 font-semibold">Tester</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">What they tested</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Rating</th>
+                    <th scope="col" className="px-4 py-3 font-semibold">Quote</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {testers.map((tester) => (
+                    <tr key={tester.tester} className="border-t border-border align-top">
+                      <td className="px-4 py-3 font-medium text-foreground">{tester.tester}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{tester.whatTheyTested}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{tester.rating}</td>
+                      <td className="px-4 py-3 text-muted-foreground">&ldquo;{tester.quote}&rdquo;</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Quotes translated from Spanish.</p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">{regressionLine}</p>
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-xl font-semibold text-foreground">Practical impact check</h3>
+            <dl className="space-y-3">
+              {impactItems.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-border bg-background p-4">
+                  <dt className="font-semibold text-foreground">{item.label}</dt>
+                  <dd className="mt-1 text-sm leading-6 text-muted-foreground">{item.text}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        </div>
+      )
+    }
+
     if (currentStep.kind === 'agent-map' && currentStep.agentMap) {
       return (
         <div className="space-y-6">
