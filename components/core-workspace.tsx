@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { ArrowRight, Check, Compass, LoaderCircle, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -292,9 +293,21 @@ export function CoreWorkspace() {
           {starter ? (
             <article className="overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm">
               <div className="border-b border-border bg-secondary/45 p-6 md:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Trip Starter</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Trip Starter</p>
+                  <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+                    Simulated
+                  </span>
+                </div>
                 <h2 className="mt-2 font-display text-2xl font-semibold text-card-foreground">{starter.destination}</h2>
                 <p className="mt-2 text-sm text-muted-foreground">{starter.travelers} travelers · {starter.duration} · {starter.budget}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  This first draft is built from a template, not AI. For personalized tips, try the{' '}
+                  <Link href="/chat" className="font-medium text-teal-700 underline underline-offset-2 hover:text-teal-800">
+                    Chat
+                  </Link>
+                  .
+                </p>
               </div>
               <div className="space-y-7 p-6 md:p-8">
                 <section>
