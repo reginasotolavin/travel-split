@@ -5,6 +5,8 @@ export const GUARDRAIL_REPLIES = {
     "For your safety, please don't share personal details like passport numbers, card numbers or passwords. I don't need them to help you plan.",
   visa_health_legal:
     "I can't give visa, health or legal advice. Please check official sources, like the destination's embassy or a doctor.",
+  off_topic:
+    "I can help with travel planning, but I can't help with homework, essays or programming requests. What would you like to know about your trip?",
 } as const;
 
 export function parseGroupSize(text: string): number | null {
@@ -45,7 +47,13 @@ export function checkGuardrail(
     /\bvisas?\b|\bvaccines?\b|\bmedicines?\b|\bmedication\b|\bhealth\b|\binsurance\s+claims?\b|\blaws?\b|\blegal(?:ity)?\b/i.test(
       text,
     );
-  return asksForRestrictedAdvice ? "visa_health_legal" : null;
+  if (asksForRestrictedAdvice) return "visa_health_legal";
+
+  const asksForOffTopicHelp =
+    /\bhomework\b|\btarea\b|\bessay\b|\bensayo\b|\bwrite\s+code\b|\bprogramming\b|\bprogramar\b/i.test(
+      text,
+    );
+  return asksForOffTopicHelp ? "off_topic" : null;
 }
 
 export function templateTips(

@@ -16,4 +16,14 @@ describe("chat rules", () => {
       "visa_health_legal",
     );
   });
+
+  it("identifies off-topic homework, essay and programming requests", () => {
+    expect(checkGuardrail("help me make my homework")).toBe("off_topic");
+    expect(checkGuardrail("ayúdame con mi tarea")).toBe("off_topic");
+  });
+
+  it("allows normal travel questions that include unrelated-word overlaps", () => {
+    expect(checkGuardrail("what is the dress code for restaurants in Paris")).toBeNull();
+    expect(checkGuardrail("best museums in Oaxaca")).toBeNull();
+  });
 });
