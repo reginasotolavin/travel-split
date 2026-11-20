@@ -39,7 +39,7 @@ export const BUILD_LOG = [
     module: 'Module 6',
     page: '/dashboard, /docs, /demo',
     whatShipped: 'Full navigation, records dashboard, build docs, guided tour, agent map, testing summary, impact check, V2 roadmap',
-    keyFix: '(filled after testing)',
+    keyFix: 'Added jump-to-step buttons in /demo (tester feedback), labeled the Trip Starter as Simulated, counted off-topic requests in the guardrail, and fixed the dashboard hiding errors (Supabase project was paused)',
   },
 ]
 
